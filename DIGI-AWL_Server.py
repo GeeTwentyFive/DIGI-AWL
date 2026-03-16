@@ -1,11 +1,13 @@
-import socket
 import sqlite3
+import ssl
+import socket
 from datetime import datetime
 
 
 PORT = 55555
-MAX_DATA_TRANSFER_LIMIT = 255
 AUTH = "DIGI-AWL"
+
+MAX_DATA_TRANSFER_LIMIT = len(AUTH) + 255
 
 
 db = sqlite3.connect("attendences.sqlite", isolation_level=None)
@@ -26,11 +28,18 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(("", PORT))
 sock.listen(1)
 
+ssock = ssl.create_default_context(
+        purpose=ssl.Purpose.CLIENT_AUTH
+).wrap_socket(
+        sock,
+        server_side=True
+)
+
 print("Server running...")
 
 try:
         while True:
-                conn, _ = sock.accept()
+                conn, _ = ssock.accept()
 
                 data = conn.recv(MAX_DATA_TRANSFER_LIMIT).decode("utf-8")
                 if not data or data[:len(AUTH)] != AUTH:
