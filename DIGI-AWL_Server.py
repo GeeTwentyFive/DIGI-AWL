@@ -3,6 +3,9 @@ import sqlite3
 import ssl
 import socket
 from datetime import datetime
+import threading
+
+import bottle
 
 
 DEFAULT_PORT = 55555
@@ -32,21 +35,37 @@ except sqlite3.OperationalError:
         )
 
 
+ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(("", port))
 sock.listen(1)
 
-ssock = ssl.create_default_context(
-        purpose=ssl.Purpose.CLIENT_AUTH
-).wrap_socket(
+ssock = ssl_context.wrap_socket(
         sock,
         server_side=True
 )
 
 
-print("Server running...")
+@bottle.hook("before_request")
+def force_https():
+        if bottle.request.urlparts.scheme == "http":
+                bottle.redirect(bottle.request.url.replace("http://", "https://"))
 
-try:
+@bottle.route("/")
+def web_interface():
+        if not bottle.request.auth or bottle.request.auth[1] != password:
+                bottle.response.status = 401
+                bottle.response.headers["WWW-Authenticate"] = 'Basic Realm="Login Required"'
+                return
+        
+        return "WIP" # TODO
+
+
+print("Starting DIGI-AWL Server...")
+
+def client_loop():
         while True:
                 conn, _ = ssock.accept()
 
@@ -64,5 +83,8 @@ try:
                 )
 
                 conn.close()
+threading.Thread(target=client_loop, daemon=True).start()
 
-except KeyboardInterrupt: exit()
+print("DIGI-AWL Server running...")
+
+bottle.run(host="0.0.0.0", port="443", server="wsgiref", ssl=ssl_context)
