@@ -1,13 +1,20 @@
+import sys
 import sqlite3
 import ssl
 import socket
 from datetime import datetime
 
 
-PORT = 55555
-AUTH = "DIGI-AWL"
+DEFAULT_PORT = 55555
+DEFAULT_PASSWORD = "DIGI-AWL"
+MAX_NAME_LENGTH = 255
 
-MAX_DATA_TRANSFER_LIMIT = len(AUTH) + 255
+
+print("CLI Usage: [PASSWORD] [PORT]")
+
+password = (sys.argv[1]) if (len(sys.argv) >= 2) else DEFAULT_PASSWORD
+port = (sys.argv[2]) if (len(sys.argv) >= 3) else DEFAULT_PORT
+max_data_transfer_limit = len(password) + MAX_NAME_LENGTH
 
 
 db = sqlite3.connect("attendences.sqlite", isolation_level=None)
@@ -24,8 +31,9 @@ except sqlite3.OperationalError:
                 ")"
         )
 
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind(("", PORT))
+sock.bind(("", port))
 sock.listen(1)
 
 ssock = ssl.create_default_context(
@@ -35,20 +43,21 @@ ssock = ssl.create_default_context(
         server_side=True
 )
 
+
 print("Server running...")
 
 try:
         while True:
                 conn, _ = ssock.accept()
 
-                data = conn.recv(MAX_DATA_TRANSFER_LIMIT).decode("utf-8")
-                if not data or data[:len(AUTH)] != AUTH:
+                data = conn.recv(max_data_transfer_limit).decode("utf-8")
+                if not data or data[:len(password)] != password:
                         conn.close()
                         continue
 
                 db_cur.execute(
                         "INSERT INTO attendances VALUES ("
-                                '"' + data[len(AUTH):] + '",'
+                                '"' + data[len(password):] + '",'
                                 '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
                                 '""'
                         ")"
