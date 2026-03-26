@@ -67,10 +67,10 @@ ssock = ssl_context.wrap_socket(
 )
 
 
-@bottle.hook("before_request")
-def force_https():
-        if bottle.request.urlparts.scheme == "http":
-                bottle.redirect(bottle.request.url.replace("http://", "https://"))
+# @bottle.hook("before_request")
+# def force_https():
+#         if bottle.request.urlparts.scheme == "http":
+#                 bottle.redirect(bottle.request.url.replace("http://", "https://"))
 
 @bottle.route("/")
 def web_interface():
@@ -79,7 +79,60 @@ def web_interface():
                 bottle.response.headers["WWW-Authenticate"] = 'Basic Realm="Login Required"'
                 return
         
-        return "WIP" # TODO
+        html = (
+                '<form method="post" style="text-align: center;">'
+                '<label for="name">Name:</label><br>'
+                '<input id="name" name="name"><br>'
+                '<br>'
+                '<label for="date_and_time">Date and time:</label><br>'
+                '<input id="date_and_time" type="datetime-local" name="date_and_time"><br>'
+                '<br>'
+                '<label for="extra_data">Extra info:</label><br>'
+                '<textarea id="extra_data" name="extra_data"></textarea><br>'
+                '<br>'
+                '<input type="submit">'
+                '</form>'
+
+                '<br><br>'
+
+                '<style>'
+                'table {width: 100%; border-collapse: collapse;}'
+                'td, th {border: 1px solid #dddddd; text-align: left; padding: 8px;}'
+                '</style>'
+
+                '<table>'
+                '<tr>'
+                '<th>' 'Name' '</th>'
+                '<th>' 'Date and time' '</th>'
+                '<th>' 'Extra info' '</th>'
+                '<th>' '' '</th>'
+                '</tr>'
+        )
+        
+        return html
+
+@bottle.post("/")
+def web_handle_post():
+        status = ""
+
+        if not bottle.request.forms.name:
+                status = "ERROR: name not provided"
+        elif not bottle.request.forms.date_and_time:
+                status = "ERROR: date and time not provided"
+        else:
+                print(bottle.request.forms.name) #
+                print(bottle.request.forms.date_and_time) # TODO: Convert to db format
+                print(bottle.request.forms.extra_data) #
+                # db_cur.execute(
+                #         "INSERT INTO attendances VALUES ("
+                #                 '"' + bottle.request.forms.name + '",'
+                #                 '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
+                #                 '""'
+                #         ")"
+                # )
+                status = "Success!"
+
+        return f"<p>{status}</p><br>{web_interface()}"
 
 
 print("Starting DIGI-AWL Server...")
