@@ -120,16 +120,13 @@ def web_handle_post():
         elif not bottle.request.forms.date_and_time:
                 status = "ERROR: date and time not provided"
         else:
-                print(bottle.request.forms.name) #
-                print(bottle.request.forms.date_and_time) # TODO: Convert to db format
-                print(bottle.request.forms.extra_data) #
-                # db_cur.execute(
-                #         "INSERT INTO attendances VALUES ("
-                #                 '"' + bottle.request.forms.name + '",'
-                #                 '"' + TODO + '",'
-                #                 '"' + bottle.request.forms.extra_data + '"'
-                #         ")"
-                # )
+                db_cur.execute(
+                        "INSERT INTO attendances VALUES ("
+                                '"' + bottle.request.forms.name + '",'
+                                '"' + datetime.strptime(bottle.request.forms.date_and_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M:%S") + '",'
+                                '"' + bottle.request.forms.extra_data + '"'
+                        ")"
+                )
                 status = "Success!"
 
         return f"<p>{status}</p><br>{web_interface()}"
