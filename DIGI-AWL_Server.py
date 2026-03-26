@@ -67,10 +67,10 @@ ssock = ssl_context.wrap_socket(
 )
 
 
-# @bottle.hook("before_request")
-# def force_https():
-#         if bottle.request.urlparts.scheme == "http":
-#                 bottle.redirect(bottle.request.url.replace("http://", "https://"))
+@bottle.hook("before_request")
+def force_https():
+        if bottle.request.urlparts.scheme == "http":
+                bottle.redirect(bottle.request.url.replace("http://", "https://"))
 
 @bottle.route("/")
 def web_interface():
@@ -109,7 +109,20 @@ def web_interface():
                 '</tr>'
         )
 
-        # TODO: SELECT * FROM attendances ORDER BY date_and_time
+        for attendance in db_cur.execute("SELECT * FROM attendances ORDER BY date_and_time DESC").fetchall():
+                html += '<tr>'
+                html += '<td>' + attendance[0] + '</td>'
+                html += '<td>' + attendance[1] + '</td>'
+                html += '<td style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">' + attendance[2] + '</td>'
+
+                html += '<td><form method="post" action="/delete" style="text-align: center;">'
+                html += f'<input name="name" value="{attendance[0]}" type="hidden">'
+                html += f'<input name="date_and_time" value="{attendance[1]}" type="hidden">'
+                html += f'<input name="extra_data" value="{attendance[2]}" type="hidden">'
+                html += '<input type="submit" value="Delete">'
+                html += '</form></td>'
+
+                html += '</tr>'
         
         return html
 
@@ -131,7 +144,13 @@ def web_handle_add():
 
 @bottle.post("/delete")
 def web_handle_delete():
-        pass # TODO: DELETE FROM attendances WHERE name=”” AND date_and_time=”” AND extra_data=””
+        db_cur.execute(
+                "DELETE FROM attendances WHERE "
+                        'name="' + bottle.request.forms.name + '" AND '
+                        'date_and_time="' + bottle.request.forms.date_and_time + '" AND '
+                        'extra_data="' + bottle.request.forms.extra_data + '"'
+        )
+        return bottle.redirect("/")
 
 
 print("Starting DIGI-AWL Server...")
