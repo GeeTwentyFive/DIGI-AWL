@@ -80,7 +80,7 @@ def web_interface():
                 return
         
         html = (
-                '<form method="post" style="text-align: center;">'
+                '<form method="post" action="/add" style="text-align: center;">'
                 '<label for="name">Name:</label><br>'
                 '<input id="name" name="name"><br>'
                 '<br>'
@@ -108,17 +108,17 @@ def web_interface():
                 '<th>' '' '</th>'
                 '</tr>'
         )
+
+        # TODO: SELECT * FROM attendances ORDER BY date_and_time
         
         return html
 
-@bottle.post("/")
-def web_handle_post():
-        status = ""
-
+@bottle.post("/add")
+def web_handle_add():
         if not bottle.request.forms.name:
-                status = "ERROR: name not provided"
+                return "ERROR: name not provided"
         elif not bottle.request.forms.date_and_time:
-                status = "ERROR: date and time not provided"
+                return "ERROR: date and time not provided"
         else:
                 db_cur.execute(
                         "INSERT INTO attendances VALUES ("
@@ -127,9 +127,11 @@ def web_handle_post():
                                 '"' + bottle.request.forms.extra_data + '"'
                         ")"
                 )
-                status = "Success!"
+                return bottle.redirect("/")
 
-        return f"<p>{status}</p><br>{web_interface()}"
+@bottle.post("/delete")
+def web_handle_delete():
+        pass # TODO: DELETE FROM attendances WHERE name=”” AND date_and_time=”” AND extra_data=””
 
 
 print("Starting DIGI-AWL Server...")
@@ -138,7 +140,7 @@ def client_loop():
         while True:
                 conn, _ = ssock.accept()
 
-                # Format: SALT ENCRYPTED_DATA ("DIGI-AWL" NAME)
+                # Format: SALT ENCRYPTED_DATA["DIGI-AWL" NAME]
                 received_data = conn.recv(max_data_transfer_limit)
                 if not received_data:
                         conn.close()
