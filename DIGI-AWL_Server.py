@@ -15,6 +15,7 @@ DEFAULT_DEVICE_PASSWORD = "DIGI-AWL"
 DEFAULT_PORT = 55555
 
 MAX_DEVICE_PASSWORD_LENGTH = 64
+DEVICE_PASSWORD_SALT_LENGTH = 16
 
 
 print("Usage: <WEB_PASSWORD> [DEVICE_PASSWORD] [PORT]")
@@ -29,7 +30,10 @@ if len(device_password) > MAX_DEVICE_PASSWORD_LENGTH:
         print(f"ERROR: Provided device password length ({len(device_password)}) exceeds maximum ({MAX_DEVICE_PASSWORD_LENGTH})")
         sys.exit(1)
 port = (sys.argv[3]) if (len(sys.argv) >= 4) else DEFAULT_PORT
-max_data_transfer_limit = MAX_TAG_CAPACITY - len(device_password)
+max_data_transfer_limit = MAX_TAG_CAPACITY - (len(device_password) + DEVICE_PASSWORD_SALT_LENGTH)
+if max_data_transfer_limit <= 0:
+        print("ERROR: length of device password+salt exceeds tag capacity")
+        sys.exit(1)
 
 
 db = sqlite3.connect("attendences.sqlite", isolation_level=None)
