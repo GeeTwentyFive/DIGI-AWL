@@ -8,16 +8,23 @@ import threading
 import bottle
 
 
-DEFAULT_PORT = 55555
-DEFAULT_PASSWORD = "DIGI-AWL"
 MAX_NAME_LENGTH = 255
 
+DEFAULT_WEB_PASSWORD = "DIGI-AWL"
+DEFAULT_DEVICE_PASSWORD = "DIGI-AWL"
+DEFAULT_PORT = 55555
 
-print("CLI Usage: [PASSWORD] [PORT]")
 
-password = (sys.argv[1]) if (len(sys.argv) >= 2) else DEFAULT_PASSWORD
-port = (sys.argv[2]) if (len(sys.argv) >= 3) else DEFAULT_PORT
-max_data_transfer_limit = len(password) + MAX_NAME_LENGTH
+print("Usage: <WEB_PASSWORD> [DEVICE_PASSWORD] [PORT]")
+
+if len(sys.argv) < 2:
+        print("You must provide a password for the web interface")
+        sys.exit()
+
+web_password = (sys.argv[1]) if (len(sys.argv) >= 2) else DEFAULT_WEB_PASSWORD
+device_password = (sys.argv[2]) if (len(sys.argv) >= 3) else DEFAULT_DEVICE_PASSWORD
+port = (sys.argv[3]) if (len(sys.argv) >= 4) else DEFAULT_PORT
+max_data_transfer_limit = len(device_password) + MAX_NAME_LENGTH
 
 
 db = sqlite3.connect("attendences.sqlite", isolation_level=None)
@@ -55,7 +62,7 @@ def force_https():
 
 @bottle.route("/")
 def web_interface():
-        if not bottle.request.auth or bottle.request.auth[1] != password:
+        if not bottle.request.auth or bottle.request.auth[1] != web_password:
                 bottle.response.status = 401
                 bottle.response.headers["WWW-Authenticate"] = 'Basic Realm="Login Required"'
                 return
@@ -70,13 +77,13 @@ def client_loop():
                 conn, _ = ssock.accept()
 
                 data = conn.recv(max_data_transfer_limit).decode("utf-8")
-                if not data or data[:len(password)] != password:
+                if not data or data[:len(device_password)] != device_password:
                         conn.close()
                         continue
 
                 db_cur.execute(
                         "INSERT INTO attendances VALUES ("
-                                '"' + data[len(password):] + '",'
+                                '"' + data[len(device_password):] + '",'
                                 '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
                                 '""'
                         ")"
