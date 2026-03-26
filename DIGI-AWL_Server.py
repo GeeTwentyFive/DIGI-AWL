@@ -10,7 +10,6 @@ import bottle
 
 MAX_TAG_CAPACITY = 255
 
-DEFAULT_WEB_PASSWORD = "DIGI-AWL"
 DEFAULT_DEVICE_PASSWORD = "DIGI-AWL"
 DEFAULT_PORT = 55555
 
@@ -25,7 +24,7 @@ if len(sys.argv) < 2:
         print("You must provide a password for the web interface")
         sys.exit()
 
-web_password = (sys.argv[1]) if (len(sys.argv) >= 2) else DEFAULT_WEB_PASSWORD
+web_password = sys.argv[1]
 device_password = (sys.argv[2]) if (len(sys.argv) >= 3) else DEFAULT_DEVICE_PASSWORD
 if len(device_password) > MAX_DEVICE_PASSWORD_LENGTH:
         print(f"ERROR: Provided device password length ({len(device_password)}) exceeds maximum ({MAX_DEVICE_PASSWORD_LENGTH})")
