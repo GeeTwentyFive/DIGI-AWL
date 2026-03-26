@@ -2,10 +2,12 @@ import sys
 import sqlite3
 import ssl
 import socket
+from hashlib import pbkdf2_hmac
 from datetime import datetime
 import threading
 
 import bottle
+from Crypto.Cipher import AES
 
 
 MAX_TAG_CAPACITY = 255
@@ -16,6 +18,7 @@ DEFAULT_PORT = 55555
 MAX_DEVICE_PASSWORD_LENGTH = 64
 DEVICE_PASSWORD_SALT_LENGTH = 16
 DEVICE_PASSWORD_HASH_ITERATIONS = 1000
+DEVICE_DATA_VERIFICATION_STRING = "DIGI-AWL"
 
 
 print("Usage: <WEB_PASSWORD> [DEVICE_PASSWORD] [PORT]")
@@ -85,14 +88,29 @@ def client_loop():
         while True:
                 conn, _ = ssock.accept()
 
-                data = conn.recv(max_data_transfer_limit).decode("utf-8")
-                if not data or data[:len(device_password)] != device_password:
+                # Format: SALT ENCRYPTED_DATA ("DIGI-AWL" NAME)
+                received_data = conn.recv(max_data_transfer_limit)
+                if not received_data:
+                        conn.close()
+                        continue
+
+                cipher = AES.new(pbkdf2_hmac(
+                        "sha256",
+                        device_password,
+                        received_data[:DEVICE_PASSWORD_SALT_LENGTH],
+                        DEVICE_PASSWORD_HASH_ITERATIONS
+                ), AES.MODE_ECB)
+                try: decrypted_data = cipher.decrypt(received_data[DEVICE_PASSWORD_SALT_LENGTH:])
+                except:
+                        conn.close()
+                        continue
+                if decrypted_data[:len(DEVICE_DATA_VERIFICATION_STRING)] != DEVICE_DATA_VERIFICATION_STRING:
                         conn.close()
                         continue
 
                 db_cur.execute(
                         "INSERT INTO attendances VALUES ("
-                                '"' + data[len(device_password):] + '",'
+                                '"' + decrypted_data[len(DEVICE_DATA_VERIFICATION_STRING):] + '",'
                                 '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
                                 '""'
                         ")"
