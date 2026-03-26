@@ -126,8 +126,8 @@ def web_handle_post():
                 # db_cur.execute(
                 #         "INSERT INTO attendances VALUES ("
                 #                 '"' + bottle.request.forms.name + '",'
-                #                 '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
-                #                 '""'
+                #                 '"' + TODO + '",'
+                #                 '"' + bottle.request.forms.extra_data + '"'
                 #         ")"
                 # )
                 status = "Success!"
