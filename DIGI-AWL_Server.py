@@ -8,11 +8,13 @@ import threading
 import bottle
 
 
-MAX_NAME_LENGTH = 255
+MAX_TAG_CAPACITY = 255
 
 DEFAULT_WEB_PASSWORD = "DIGI-AWL"
 DEFAULT_DEVICE_PASSWORD = "DIGI-AWL"
 DEFAULT_PORT = 55555
+
+MAX_DEVICE_PASSWORD_LENGTH = 64
 
 
 print("Usage: <WEB_PASSWORD> [DEVICE_PASSWORD] [PORT]")
@@ -23,8 +25,11 @@ if len(sys.argv) < 2:
 
 web_password = (sys.argv[1]) if (len(sys.argv) >= 2) else DEFAULT_WEB_PASSWORD
 device_password = (sys.argv[2]) if (len(sys.argv) >= 3) else DEFAULT_DEVICE_PASSWORD
+if len(device_password) > MAX_DEVICE_PASSWORD_LENGTH:
+        print(f"ERROR: Provided device password length ({len(device_password)}) exceeds maximum ({MAX_DEVICE_PASSWORD_LENGTH})")
+        sys.exit(1)
 port = (sys.argv[3]) if (len(sys.argv) >= 4) else DEFAULT_PORT
-max_data_transfer_limit = len(device_password) + MAX_NAME_LENGTH
+max_data_transfer_limit = MAX_TAG_CAPACITY - len(device_password)
 
 
 db = sqlite3.connect("attendences.sqlite", isolation_level=None)
