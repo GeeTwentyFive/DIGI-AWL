@@ -16,7 +16,8 @@
                                 return;
                         };
 
-                        ndef.onreading = event => { // TODO
+                        ndef.onreading = event => {
+                                // TODO: Decrypt data with device password -> pbkdf2 + salt from read data -> AES -> verify via "DIGI-AWL"
                                 output(event.message.records[0].data) //
                         };
                 }).catch(err => {
