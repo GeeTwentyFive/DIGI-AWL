@@ -18,7 +18,8 @@
 
                         ndef.onreading = event => {
                                 // TODO: Decrypt data with device password -> pbkdf2 + salt from read data -> AES -> verify via "DIGI-AWL"
-                                output(event.message.records[0].data) //
+                                //output(event.message.records[0].data) //
+                                output("Scanned!!") //
                         };
                 }).catch(err => {
                         output(`ERROR: Failed to start scan - ${err}`);
