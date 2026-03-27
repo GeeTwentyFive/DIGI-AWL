@@ -26,7 +26,7 @@
                 });
         }
 
-        function write_tag() { // TODO
+        function write_tag() { // TODO: Encrypt write_data with pbkdf2 + random salt -> AES, include unencrpyted salt, and "DIGI-AWL" in encrypted data
                 const write_data = document.querySelector("#write_data").value;
                 const device_password = document.querySelector("#device_password").value;
 
