@@ -4,7 +4,16 @@
                 window.stop()
         }
 
+        function write_tag() { // TODO: Encrypt write_data with pbkdf2 + random salt -> AES, include unencrpyted salt, and "DIGI-AWL" in encrypted data
+                const write_data = document.querySelector("#write_data").value;
+                const device_password = document.querySelector("#device_password").value;
+
+                document.querySelector("#write_status").innerHTML = write_data + " " + device_password;
+        }
+
         function read_tag() {
+                const device_password = document.querySelector("#device_password").value;
+
                 const output = text => {document.querySelector("#read_data").innerHTML = text;};
 
                 const ndef = new NDEFReader();
@@ -22,7 +31,7 @@
                                         return;
                                 }
                                 // TODO: Decrypt data with device password -> pbkdf2 + salt from read data -> AES -> verify via "DIGI-AWL"
-                                output((new TextDecoder()).decode(event.message.records[0].data)); //
+                                output((new TextDecoder()).decode(event.message.records[0].data)); // TEMP; TEST
                                 return;
                         };
                 }).catch(err => {
@@ -30,27 +39,23 @@
                         return;
                 });
         }
-
-        function write_tag() { // TODO: Encrypt write_data with pbkdf2 + random salt -> AES, include unencrpyted salt, and "DIGI-AWL" in encrypted data
-                const write_data = document.querySelector("#write_data").value;
-                const device_password = document.querySelector("#device_password").value;
-
-                document.querySelector("#write_status").innerHTML = write_data + " " + device_password;
-        }
 </script>
 
 <style>body {zoom: 2;}</style>
 
-<label for="write_data">Data:</label><br>
-<input id="write_data" name="write_data"><br>
-<br>
-<label for="device_password">Device password:</label><br>
+<label for="device_password">Device/tag password (required for both write and read):</label><br>
 <input id="device_password" name="device_password" value="DIGI-AWL"><br>
+
+<br>
+<br>
+<br>
+
+<label for="write_data">Name/data to write:</label><br>
+<input id="write_data" name="write_data"><br>
 <br>
 <button onclick="write_tag()">Write</button><br>
 <p id="write_status">-</p><br>
 
-<br>
 <br>
 
 <button onclick="read_tag()">Read</button><br>
