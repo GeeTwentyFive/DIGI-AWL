@@ -172,10 +172,12 @@ def client_loop():
                         DEVICE_PASSWORD_HASH_ITERATIONS
                 ), AES.MODE_ECB)
                 try: decrypted_data = cipher.decrypt(received_data[DEVICE_PASSWORD_SALT_LENGTH:])
-                except:
+                except Exception as e:
+                        print(f"ERROR: Failed to decrypt received data\n{e}")
                         conn.close()
                         continue
                 if decrypted_data[:len(DEVICE_DATA_VERIFICATION_STRING)] != DEVICE_DATA_VERIFICATION_STRING:
+                        print("ERROR: Failed to verify correctness of decrypted received data")
                         conn.close()
                         continue
 
