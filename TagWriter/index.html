@@ -1,0 +1,51 @@
+<script>
+        if (!('NDEFReader' in window)) {
+                document.write("ERROR: Browser does not support Web NFC API")
+                window.stop()
+        }
+
+        function read_tag() {
+                const output = text => {document.querySelector("#read_data").innerHTML = text;};
+
+                const ndef = new NDEFReader();
+                ndef.scan().then(() => {
+                        output("Scanning...");
+
+                        ndef.onreadingerror = () => {
+                                output("ERROR: Failed to read data from tag");
+                                return;
+                        };
+
+                        ndef.onreading = event => { // TODO
+                                output(event.message.records[0].data) //
+                        };
+                }).catch(err => {
+                        output(`ERROR: Failed to start scan - ${err}`);
+                        return;
+                });
+        }
+
+        function write_tag() { // TODO
+                const write_data = document.querySelector("#write_data").value;
+                const device_password = document.querySelector("#device_password").value;
+
+                document.querySelector("#write_status").innerHTML = write_data + " " + device_password;
+        }
+</script>
+
+<style>body {zoom: 2;}</style>
+
+<label for="write_data">Data:</label><br>
+<input id="write_data" name="write_data"><br>
+<br>
+<label for="device_password">Device password:</label><br>
+<input id="device_password" name="device_password" value="DIGI-AWL"><br>
+<br>
+<button onclick="write_tag()">Write</button><br>
+<p id="write_status">-</p><br>
+
+<br>
+<br>
+
+<button onclick="read_tag()">Read</button><br>
+<p id="read_data">-</p><br>
