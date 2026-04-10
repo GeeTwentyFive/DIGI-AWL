@@ -802,16 +802,48 @@
 
 
 <script>
-        if (!('NDEFReader' in window)) {
-                document.write("ERROR: Browser does not support Web NFC API")
-                window.stop()
-        }
+        // if (!('NDEFReader' in window)) {
+        //         document.write("ERROR: Browser does not support Web NFC API")
+        //         window.stop()
+        // }
 
-        function write_tag() { // TODO: Encrypt write_data with pbkdf2 + random salt -> AES, include unencrpyted salt, and "DIGI-AWL" in encrypted data
+        const DEVICE_PASSWORD_HASH_ITERATIONS = 1000;
+
+        async function write_tag() { // TODO: Encrypt write_data with pbkdf2 + random salt -> AES, include unencrpyted salt, and "DIGI-AWL" in encrypted data
                 const write_data = document.querySelector("#write_data").value;
                 const device_password = document.querySelector("#device_password").value;
 
-                document.querySelector("#write_status").innerHTML = write_data + " " + device_password;
+                const salt = window.crypto.getRandomValues(new Uint8Array(16));
+
+                const key = new Uint8Array(await window.crypto.subtle.exportKey("raw",
+                    await window.crypto.subtle.deriveKey(
+                        {
+                            "name": "PBKDF2",
+                            "salt": salt,
+                            "iterations": DEVICE_PASSWORD_HASH_ITERATIONS,
+                            "hash": "SHA-256"
+                        },
+                        await window.crypto.subtle.importKey(
+                            "raw",
+                            (new TextEncoder).encode(device_password),
+                            "PBKDF2",
+                            false,
+                            ["deriveKey"]
+                        ),
+                        { "name": "HMAC", "hash": "SHA-256", "length": 256 },
+                        true,
+                        ["sign"]
+                    )
+                ));
+
+                console.log(key);
+                console.log(key.length);
+
+                const encrypted_data = (new aesjs.ModeOfOperation.ecb(key)).encrypt(aesjs.utils.utf8.toBytes(write_data));
+
+                document.querySelector("#write_status").innerHTML = write_data + " " + device_password + " " + encrypted_data + " " + key;
+
+                // TODO
         }
 
         function read_tag() {
