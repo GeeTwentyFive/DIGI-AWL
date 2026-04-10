@@ -2,41 +2,22 @@ import sys
 import sqlite3
 import ssl
 import socket
-from hashlib import pbkdf2_hmac
 from datetime import datetime
 import threading
 
 import bottle
-from Crypto.Cipher import AES
 
 
 MAX_TAG_CAPACITY = 255
 
-DEFAULT_DEVICE_PASSWORD = "DIGI-AWL"
 DEFAULT_PORT = 55555
-
-MAX_DEVICE_PASSWORD_LENGTH = 64
-DEVICE_PASSWORD_SALT_LENGTH = 16
-DEVICE_PASSWORD_HASH_ITERATIONS = 1000
-DEVICE_DATA_VERIFICATION_STRING = "DIGI-AWL"
+DEFAULT_WEB_PASSWORD = "DIGI-AWL"
 
 
-print("Usage: <WEB_PASSWORD> [DEVICE_PASSWORD] [PORT]")
+print("Usage: [SERVER_PORT] [WEB_INTERFACE_PASSWORD]")
 
-if len(sys.argv) < 2:
-        print("You must provide a password for the web interface")
-        sys.exit()
-
-web_password = sys.argv[1]
-device_password = (sys.argv[2]) if (len(sys.argv) >= 3) else DEFAULT_DEVICE_PASSWORD
-if len(device_password) > MAX_DEVICE_PASSWORD_LENGTH:
-        print(f"ERROR: Provided device password length ({len(device_password)}) exceeds maximum ({MAX_DEVICE_PASSWORD_LENGTH})")
-        sys.exit(1)
-port = (sys.argv[3]) if (len(sys.argv) >= 4) else DEFAULT_PORT
-max_data_transfer_limit = MAX_TAG_CAPACITY - (len(device_password) + DEVICE_PASSWORD_SALT_LENGTH)
-if max_data_transfer_limit <= 0:
-        print("ERROR: length of device password+salt exceeds tag capacity")
-        sys.exit(1)
+port = (sys.argv[1]) if (len(sys.argv) >= 2) else DEFAULT_PORT
+web_password = (sys.argv[2]) if (len(sys.argv) >= 3) else DEFAULT_WEB_PASSWORD
 
 
 db = sqlite3.connect("attendences.sqlite", isolation_level=None)
@@ -159,31 +140,14 @@ def client_loop():
         while True:
                 conn, _ = ssock.accept()
 
-                # Format: SALT ENCRYPTED_DATA["DIGI-AWL" NAME]
-                received_data = conn.recv(max_data_transfer_limit)
+                received_data = conn.recv(MAX_TAG_CAPACITY)
                 if not received_data:
-                        conn.close()
-                        continue
-
-                cipher = AES.new(pbkdf2_hmac(
-                        "sha256",
-                        device_password,
-                        received_data[:DEVICE_PASSWORD_SALT_LENGTH],
-                        DEVICE_PASSWORD_HASH_ITERATIONS
-                ), AES.MODE_ECB)
-                try: decrypted_data = cipher.decrypt(received_data[DEVICE_PASSWORD_SALT_LENGTH:])
-                except Exception as e:
-                        print(f"ERROR: Failed to decrypt received data\n{e}")
-                        conn.close()
-                        continue
-                if decrypted_data[:len(DEVICE_DATA_VERIFICATION_STRING)] != DEVICE_DATA_VERIFICATION_STRING:
-                        print("ERROR: Failed to verify correctness of decrypted received data")
                         conn.close()
                         continue
 
                 db_cur.execute(
                         "INSERT INTO attendances VALUES ("
-                                '"' + decrypted_data[len(DEVICE_DATA_VERIFICATION_STRING):] + '",'
+                                '"' + received_data + '",'
                                 '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
                                 '""'
                         ")"
