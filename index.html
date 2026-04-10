@@ -4,13 +4,22 @@
                 window.stop()
         }
 
+        const CIPHER_OFFSET = -30;
+        const INTEGRITY_CHECK_STRING = "DAL_";
+
         async function write_tag() {
                 const output = text => {document.querySelector("#write_status").innerHTML = text;};
 
-                const write_data = document.querySelector("#write_data").value;
+                let write_data = document.querySelector("#write_data").value;
+                write_data = INTEGRITY_CHECK_STRING + write_data;
+
+                let ciphered_write_data = "";
+                for (c of write_data) {
+                        ciphered_write_data += String.fromCharCode(c.charCodeAt(0) + CIPHER_OFFSET)
+                }
 
                 const ndef = new NDEFReader();
-                ndef.write(write_data).then(() => {
+                ndef.write(ciphered_write_data).then(() => {
                         output("Written: " + write_data)
                 }).catch(error => {
                         output("ERROR: Failed to write data")
@@ -34,7 +43,21 @@
                                         output("Tag is empty");
                                         return;
                                 }
-                                output((new TextDecoder()).decode(event.message.records[0].data));
+
+                                let ciphered_read_data = (new TextDecoder()).decode(event.message.records[0].data);
+
+                                let read_data = "";
+                                for (c of ciphered_read_data) {
+                                        read_data += String.fromCharCode(c.charCodeAt(0) - CIPHER_OFFSET)
+                                }
+
+                                if (read_data.slice(0, INTEGRITY_CHECK_STRING.length) != INTEGRITY_CHECK_STRING) {
+                                        output("ERROR: Invalid data on tag");
+                                        return;
+                                }
+
+                                output(read_data);
+
                                 return;
                         };
                 }).catch(err => {

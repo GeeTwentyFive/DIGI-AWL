@@ -9,9 +9,11 @@ import bottle
 
 
 MAX_TAG_CAPACITY = 255
-
 DEFAULT_PORT = 55555
 DEFAULT_WEB_PASSWORD = "DIGI-AWL"
+
+CIPHER_OFFSET = -30
+INTEGRITY_CHECK_STRING = "DAL_"
 
 
 print("Usage: [SERVER_PORT] [WEB_INTERFACE_PASSWORD]")
@@ -145,9 +147,17 @@ def client_loop():
                         conn.close()
                         continue
 
+                deciphered_received_data = ""
+                for c in received_data:
+                        deciphered_received_data += chr(ord(c) - CIPHER_OFFSET)
+                
+                if (deciphered_received_data[:len(INTEGRITY_CHECK_STRING)] != INTEGRITY_CHECK_STRING):
+                        print("Received invalid data from " + str(conn.getpeername()))
+                        continue
+
                 db_cur.execute(
                         "INSERT INTO attendances VALUES ("
-                                '"' + received_data + '",'
+                                '"' + deciphered_received_data + '",'
                                 '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
                                 '""'
                         ")"
