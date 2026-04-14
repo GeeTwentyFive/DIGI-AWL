@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import sqlite3
 import ssl
@@ -5,7 +6,11 @@ import socket
 from datetime import datetime
 import threading
 
-import bottle
+try: import bottle
+except:
+        print("ERROR: 'bottle' not found")
+        print("Install missing dependency via `pip install bottle`")
+        sys.exit(1)
 
 
 MAX_TAG_CAPACITY = 255
