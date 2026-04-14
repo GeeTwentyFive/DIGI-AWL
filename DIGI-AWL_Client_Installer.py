@@ -249,18 +249,35 @@ class MFRC522:
 #endregion wendlers/micropython-mfrc522
 
 
+import machine
+import network
+import time
+
+
 SERVER_IP = "{0}"
 SERVER_PORT = {1}
 WIFI_SSID = "{2}"
 WIFI_PASSWORD = "{3}"
 SAME_TAG_SCAN_COOLDOWN = 3
 
+LED_PIN = machine.Pin(8, machine.Pin.OUT)
 
+
+if WIFI_SSID != "":
+	wlan = network.WLAN()
+	wlan.active(True)
+	wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+	while not wlan.isconnected():
+		time.sleep(1)
+		LED_PIN.value(not LED_PIN.value())
+LED_PIN.value(1)
+
+# 3.3v and GND for MFRC522
+machine.Pin(5, machine.Pin.OUT).value(1)
+machine.Pin(7, machine.Pin.OUT).value(0)
+
+rdr = MFRC522(20, 10, 9, 6, 21)
 # TODO
-print(SERVER_IP) # TEMP; TEST
-print(SERVER_PORT) # TEMP; TEST
-print(WIFI_SSID) # TEMP; TEST
-print(WIFI_PASSWORD) # TEMP; TEST
 """
 
 
@@ -280,15 +297,15 @@ CLIENT_PROGRAM = CLIENT_PROGRAM.format(
 )
 
 
-print("Flashing MicroPython firmware to ESP32-C3...")
+# print("Flashing MicroPython firmware to ESP32-C3...")
 
-os.system("esptool erase-flash")
-with open("_TEMP_MicroPython.bin", "wb") as f:
-    f.write(MICROPYTHON_ESP32C3_FIRMWARE)
-if os.system("esptool --baud 460800 write-flash 0 _TEMP_MicroPython.bin") != 0:
-    print("ERROR: Failed to flash MicroPython firmware to ESP32-C3")
-    sys.exit(1)
-os.remove("_TEMP_MicroPython.bin")
+# os.system("esptool erase-flash")
+# with open("_TEMP_MicroPython.bin", "wb") as f:
+#     f.write(MICROPYTHON_ESP32C3_FIRMWARE)
+# if os.system("esptool --baud 460800 write-flash 0 _TEMP_MicroPython.bin") != 0:
+#     print("ERROR: Failed to flash MicroPython firmware to ESP32-C3")
+#     sys.exit(1)
+# os.remove("_TEMP_MicroPython.bin")
 
 
 print("Writing DIGI-AWL client script to ESP32-C3...")
