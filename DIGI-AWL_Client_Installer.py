@@ -252,6 +252,7 @@ class MFRC522:
 import machine
 import network
 import time
+import socket
 
 
 SERVER_IP = "{0}"
@@ -278,16 +279,18 @@ machine.Pin(7, machine.Pin.OUT).value(0)
 
 rdr = MFRC522(20, 10, 9, 6, 21)
 while True:
-	machine.idle()
 	(stat, tag_type) = rdr.request(rdr.REQIDL)
 	if stat != rdr.OK: continue
 	(stat, raw_uid) = rdr.anticoll()
 	if stat != rdr.OK: continue
 	if rdr.select_tag(raw_uid) != rdr.OK: continue
-	for i in range(255):  # TEMP; TEST
+	LED_PIN.value(0)
+	for i in range(255): # TEMP; TEST:
 		read_data = rdr.read(i)
 		if (read_data == None) or (read_data == "\0"): break
 		print(read_data)
+	machine.idle()
+	LED_PIN.value(1)
 """
 
 
