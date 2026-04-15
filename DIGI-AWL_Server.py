@@ -42,17 +42,9 @@ except sqlite3.OperationalError:
         )
 
 
-ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(("", port))
 sock.listen(1)
-
-ssock = ssl_context.wrap_socket(
-        sock,
-        server_side=True
-)
 
 
 # @bottle.hook("before_request")
@@ -144,33 +136,42 @@ def web_handle_delete():
 print("Starting DIGI-AWL Server...")
 
 def client_loop():
+        db = sqlite3.connect("attendences.sqlite", isolation_level=None)
+        db_cur = db.cursor()
         while True:
-                conn, _ = ssock.accept()
+                try:
+                        conn, _ = sock.accept()
+                        with conn:
+                                received_data = conn.recv(MAX_TAG_CAPACITY)
+                                if not received_data: continue
 
-                received_data = conn.recv(MAX_TAG_CAPACITY)
-                if not received_data:
-                        conn.close()
+                                deciphered_received_data = ""
+                                for c in received_data:
+                                        deciphered_received_data += chr(c - CIPHER_OFFSET)
+                                                                
+                                if (deciphered_received_data[:len(INTEGRITY_CHECK_STRING)] != INTEGRITY_CHECK_STRING):
+                                        print("Received invalid data from " + str(conn.getpeername()))
+                                        continue
+
+                                print("Scanner received: " + deciphered_received_data[len(INTEGRITY_CHECK_STRING):])
+
+                                db_cur.execute(
+                                        "INSERT INTO attendances VALUES ("
+                                                '"' + deciphered_received_data[len(INTEGRITY_CHECK_STRING):] + '",'
+                                                '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
+                                                '""'
+                                        ")"
+                                )
+                except Exception as e:
+                        print(e)
                         continue
-
-                deciphered_received_data = ""
-                for c in received_data:
-                        deciphered_received_data += chr(ord(c) - CIPHER_OFFSET)
-                
-                if (deciphered_received_data[:len(INTEGRITY_CHECK_STRING)] != INTEGRITY_CHECK_STRING):
-                        print("Received invalid data from " + str(conn.getpeername()))
-                        continue
-
-                db_cur.execute(
-                        "INSERT INTO attendances VALUES ("
-                                '"' + deciphered_received_data + '",'
-                                '"' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '",'
-                                '""'
-                        ")"
-                )
-
-                conn.close()
 threading.Thread(target=client_loop, daemon=True).start()
 
 print("DIGI-AWL Server running...")
 
-bottle.run(host="0.0.0.0", port="443", server="wsgiref", ssl=ssl_context)
+bottle.run(
+        host="0.0.0.0",
+        port="443",
+        server="wsgiref",
+        ssl=ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+)

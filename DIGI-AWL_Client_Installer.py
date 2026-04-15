@@ -265,16 +265,15 @@ SAME_TAG_SCAN_COOLDOWN = 3
 LED_PIN = machine.Pin(8, machine.Pin.OUT)
 
 
+wlan = network.WLAN()
+
 if WIFI_SSID != "":
-	wlan = network.WLAN()
 	wlan.active(True)
 	wlan.connect(WIFI_SSID, WIFI_PASSWORD)
 	while not wlan.isconnected():
 		time.sleep(1)
 		LED_PIN.value(not LED_PIN.value())
 LED_PIN.value(1)
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # 3.3v and GND for MFRC522
 machine.Pin(5, machine.Pin.OUT).value(1)
@@ -302,16 +301,25 @@ while True:
 				break
 			read_data.append(b)
 		if break_outer: break
+        if WIFI_SSID != "":
+		if not wlan.isconnected():
+			wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+			while not wlan.isconnected():
+				time.sleep(1)
+				LED_PIN.value(not LED_PIN.value())
+			LED_PIN.value(0)
         try:
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.connect((SERVER_IP, SERVER_PORT))
-		sock.sendall(bytes(read_data, "utf-8"))
+		sock.sendall(bytes(read_data))
 		sock.close()
+		LED_PIN.value(1)
+		time.sleep(1)
         except:
 		for _ in range(10):
 			LED_PIN.value(not LED_PIN.value())
 			time.sleep_ms(200)
 	LED_PIN.value(1)
-	time.sleep(1)
 """
 
 
