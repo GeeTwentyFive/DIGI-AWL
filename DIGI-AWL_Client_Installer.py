@@ -339,15 +339,15 @@ CLIENT_PROGRAM = CLIENT_PROGRAM.format(
 )
 
 
-# print("Flashing MicroPython firmware to ESP32-C3...")
+print("Flashing MicroPython firmware to ESP32-C3...")
 
-# os.system("esptool erase-flash")
-# with open("_TEMP_MicroPython.bin", "wb") as f:
-#     f.write(MICROPYTHON_ESP32C3_FIRMWARE)
-# if os.system("esptool --baud 460800 write-flash 0 _TEMP_MicroPython.bin") != 0:
-#     print("ERROR: Failed to flash MicroPython firmware to ESP32-C3")
-#     sys.exit(1)
-# os.remove("_TEMP_MicroPython.bin")
+os.system("esptool erase-flash")
+with open("_TEMP_MicroPython.bin", "wb") as f:
+    f.write(MICROPYTHON_ESP32C3_FIRMWARE)
+if os.system("esptool --baud 460800 write-flash 0 _TEMP_MicroPython.bin") != 0:
+    print("ERROR: Failed to flash MicroPython firmware to ESP32-C3")
+    sys.exit(1)
+os.remove("_TEMP_MicroPython.bin")
 
 
 print("Writing DIGI-AWL client script to ESP32-C3...")
