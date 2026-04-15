@@ -274,6 +274,8 @@ if WIFI_SSID != "":
 		LED_PIN.value(not LED_PIN.value())
 LED_PIN.value(1)
 
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 # 3.3v and GND for MFRC522
 machine.Pin(5, machine.Pin.OUT).value(1)
 machine.Pin(7, machine.Pin.OUT).value(0)
@@ -298,9 +300,16 @@ while True:
 			if (b == 254) or (b == 0):
 				break_outer = True
 				break
-			read_data.append(chr(b))
+			read_data.append(b)
 		if break_outer: break
-	print(read_data) # TEMP; TEST
+        try:
+		sock.connect((SERVER_IP, SERVER_PORT))
+		sock.sendall(bytes(read_data, "utf-8"))
+		sock.close()
+        except:
+		for _ in range(10):
+			LED_PIN.value(not LED_PIN.value())
+			time.sleep_ms(200)
 	LED_PIN.value(1)
 	time.sleep(1)
 """

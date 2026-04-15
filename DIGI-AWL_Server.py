@@ -55,10 +55,10 @@ ssock = ssl_context.wrap_socket(
 )
 
 
-@bottle.hook("before_request")
-def force_https():
-        if bottle.request.urlparts.scheme == "http":
-                bottle.redirect(bottle.request.url.replace("http://", "https://"))
+# @bottle.hook("before_request")
+# def force_https():
+#         if bottle.request.urlparts.scheme == "http":
+#                 bottle.redirect(bottle.request.url.replace("http://", "https://"))
 
 @bottle.route("/")
 def web_interface():
