@@ -20,7 +20,7 @@
 
                 const ndef = new NDEFReader();
                 ndef.write(ciphered_write_data).then(() => {
-                        output("Written: " + write_data)
+                        output("Written: " + write_data.slice(INTEGRITY_CHECK_STRING.length))
                 }).catch(error => {
                         output("ERROR: Failed to write data")
                 })
