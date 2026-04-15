@@ -56,7 +56,7 @@
                                         return;
                                 }
 
-                                output(read_data);
+                                output(read_data.slice(INTEGRITY_CHECK_STRING.length));
 
                                 return;
                         };
