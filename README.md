@@ -39,4 +39,4 @@ Wiring:
 
 5) User should now be able to hold NFC tag next to device to scan it (successful scan shown by LED turning on then off once after bringing tag close, should flash multiple times instead on error)
 
-To see and manage entries in the database, navigate to `http://<IP_ADDRESS_OF_SERVER_COMPUTER>` in a browser (`http://localhost` should work if accessing on same computer)
+To see and manage entries in the database, navigate to `http://<IP_ADDRESS_OF_SERVER_COMPUTER>` in a browser and then pass password in password field (default is "DIGI-AWL") (`http://localhost` should work if accessing on same computer)
