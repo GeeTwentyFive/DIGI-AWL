@@ -171,7 +171,7 @@ print("DIGI-AWL Server running...")
 
 bottle.run(
         host="0.0.0.0",
-        port="443",
+        port=80,
         server="wsgiref",
         ssl=ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 )
