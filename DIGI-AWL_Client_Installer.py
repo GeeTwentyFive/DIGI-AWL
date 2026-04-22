@@ -260,9 +260,9 @@ SERVER_IP = "{0}"
 SERVER_PORT = {1}
 WIFI_SSID = "{2}"
 WIFI_PASSWORD = "{3}"
-SAME_TAG_SCAN_COOLDOWN = 3
+LAST_TAG_SCAN_COOLDOWN_MS = 60000
 
-LED_PIN = machine.Pin(8, machine.Pin.OUT)
+LED_PIN = machine.Pin(8, machine.Pin.OUT)    # 0 = on, 1 = off
 
 
 wlan = network.WLAN()
@@ -280,7 +280,11 @@ machine.Pin(5, machine.Pin.OUT).value(1)
 machine.Pin(7, machine.Pin.OUT).value(0)
 
 rdr = MFRC522(20, 10, 9, 6, 21)
+last_read_data = []
+last_read_data_time = 0
 while True:
+	if time.ticks_diff(time.ticks_ms(), last_read_data_time) > LAST_TAG_SCAN_COOLDOWN_MS:
+		last_read_data = []
 	(stat, tag_type) = rdr.request(rdr.REQIDL)
 	if stat != rdr.OK: continue
 	(stat, raw_uid) = rdr.anticoll()
@@ -301,6 +305,11 @@ while True:
 				break
 			read_data.append(b)
 		if break_outer: break
+	if read_data == last_read_data:
+		LED_PIN.value(1)
+		continue
+	last_read_data = read_data
+	last_read_data_time = time.ticks_ms()
         if WIFI_SSID != "":
 		if not wlan.isconnected():
 			wlan.connect(WIFI_SSID, WIFI_PASSWORD)
